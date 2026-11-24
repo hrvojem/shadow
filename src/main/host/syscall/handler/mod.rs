@@ -51,6 +51,7 @@ mod stat;
 mod sysinfo;
 mod time;
 mod timerfd;
+mod times;
 mod uio;
 mod unistd;
 mod wait;
@@ -488,6 +489,7 @@ impl SyscallHandler {
             SyscallNum::NR_syncfs => handle!(syncfs),
             SyscallNum::NR_sysinfo => handle!(sysinfo),
             SyscallNum::NR_tgkill => handle!(tgkill),
+            SyscallNum::NR_times => handle!(times),
             SyscallNum::NR_timerfd_create => handle!(timerfd_create),
             SyscallNum::NR_timerfd_gettime => handle!(timerfd_gettime),
             SyscallNum::NR_timerfd_settime => handle!(timerfd_settime),
