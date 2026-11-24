@@ -570,6 +570,7 @@ impl SyscallHandler {
             | SyscallNum::NR_statfs
             | SyscallNum::NR_symlink
             | SyscallNum::NR_truncate
+            | SyscallNum::NR_umask
             | SyscallNum::NR_utime
             | SyscallNum::NR_utimes => {
                 log::trace!("Native syscall {} ({})", syscall_name, ctx.args.number);
