@@ -113,6 +113,12 @@ struct _Epoll {
     /* A counter for sorting watches, for guaranteeing determinism when reporting events. */
     uint64_t watch_id_counter;
 
+    /* Set when a watched file closes. This epoll serves poll() and select(),
+     * so a file closed by another thread while a thread polls it must wake
+     * that thread (which then reports POLLNVAL for it), instead of the watch
+     * silently disappearing and the wakeup being treated as spurious. */
+    gboolean watchClosed;
+
     /* status flags, as documented in open(2) */
     int statusFlags;
 
@@ -317,6 +323,7 @@ void epoll_reset(Epoll* epoll) {
     // Removing will also unref previously stored descriptors
     g_hash_table_remove_all(epoll->ready);
     g_hash_table_remove_all(epoll->watching);
+    epoll->watchClosed = FALSE;
 }
 
 static void _epoll_close(LegacyFile* descriptor, const Host* host) {
@@ -757,7 +764,8 @@ gint epoll_getEvents(Epoll* epoll, struct epoll_event* eventArray, gint eventArr
     /* if we consumed all the events that we had to report,
      * then our parent descriptor can no longer read child epolls */
     legacyfile_adjustStatus(
-        &(epoll->super), FileState_READABLE, epoll_getNumReadyEvents(epoll) ? TRUE : FALSE, 0);
+        &(epoll->super), FileState_READABLE,
+        (epoll_getNumReadyEvents(epoll) || epoll->watchClosed) ? TRUE : FALSE, 0);
 
     return 0;
 }
@@ -789,6 +797,7 @@ static void _epoll_fileStatusChanged(Epoll* epoll, const EpollKey* key) {
 
             /* if it's closed, then remove it from the watching list */
             if (watch->flags & EWF_CLOSED) {
+                epoll->watchClosed = TRUE;
                 /* unref gets called on the watch when it is removed from these tables */
                 g_hash_table_remove(epoll->watching, key);
                 /* we should have removed it from the ready list earlier */
@@ -799,5 +808,6 @@ static void _epoll_fileStatusChanged(Epoll* epoll, const EpollKey* key) {
 
     /* check the status on the parent epoll fd and adjust as needed */
     legacyfile_adjustStatus(
-        &(epoll->super), FileState_READABLE, epoll_getNumReadyEvents(epoll) ? TRUE : FALSE, 0);
+        &(epoll->super), FileState_READABLE,
+        (epoll_getNumReadyEvents(epoll) || epoll->watchClosed) ? TRUE : FALSE, 0);
 }
