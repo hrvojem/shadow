@@ -46,11 +46,13 @@ mod sched;
 mod select;
 mod shadow;
 mod signal;
+mod sigtimedwait;
 mod socket;
 mod stat;
 mod sysinfo;
 mod time;
 mod timerfd;
+mod times;
 mod uio;
 mod unistd;
 mod wait;
@@ -476,6 +478,7 @@ impl SyscallHandler {
             SyscallNum::NR_rseq => handle!(rseq),
             SyscallNum::NR_rt_sigaction => handle!(rt_sigaction),
             SyscallNum::NR_rt_sigprocmask => handle!(rt_sigprocmask),
+            SyscallNum::NR_rt_sigtimedwait => handle!(rt_sigtimedwait),
             SyscallNum::NR_sched_getaffinity => handle!(sched_getaffinity),
             SyscallNum::NR_sched_setaffinity => handle!(sched_setaffinity),
             SyscallNum::NR_select => handle!(select),
@@ -498,6 +501,7 @@ impl SyscallHandler {
             SyscallNum::NR_syncfs => handle!(syncfs),
             SyscallNum::NR_sysinfo => handle!(sysinfo),
             SyscallNum::NR_tgkill => handle!(tgkill),
+            SyscallNum::NR_times => handle!(times),
             SyscallNum::NR_timerfd_create => handle!(timerfd_create),
             SyscallNum::NR_timerfd_gettime => handle!(timerfd_gettime),
             SyscallNum::NR_timerfd_settime => handle!(timerfd_settime),
@@ -581,6 +585,7 @@ impl SyscallHandler {
             | SyscallNum::NR_statfs
             | SyscallNum::NR_symlink
             | SyscallNum::NR_truncate
+            | SyscallNum::NR_umask
             | SyscallNum::NR_unlink
             | SyscallNum::NR_utime
             | SyscallNum::NR_utimes => {

@@ -1764,6 +1764,11 @@ gint tcp_acceptServerPeer(TCP* tcp, const Host* host, in_addr_t* ip, in_port_t* 
         return -EINVAL;
     }
 
+    /* the listening socket was shut down for reading */
+    if (tcp->flags & TCPF_LOCAL_CLOSED_RD) {
+        return -EINVAL;
+    }
+
     /* if there are no pending connection ready to accept, dont block waiting */
     if(g_queue_get_length(tcp->server->pending) <= 0) {
         /* listen sockets should have no data, and should not be readable if no pending conns */
@@ -2834,6 +2839,18 @@ static void _tcp_close(LegacyFile* descriptor, const Host* host) {
 
 gint tcp_shutdown(TCP* tcp, const Host* host, gint how) {
     MAGIC_ASSERT(tcp);
+
+    if (tcp->state == TCPS_LISTEN) {
+        /* As on Linux, shutting down a listening socket for reading stops it
+         * accepting connections and wakes the threads waiting on it (servers
+         * such as mysqld use this to stop their accept loops); accept then
+         * fails with EINVAL. */
+        if (how == SHUT_RD || how == SHUT_RDWR) {
+            tcp->flags |= TCPF_LOCAL_CLOSED_RD;
+            legacyfile_adjustStatus((LegacyFile*)tcp, FileState_READABLE, TRUE, 0);
+        }
+        return 0;
+    }
 
     if(tcp->state == TCPS_SYNSENT || tcp->state == TCPS_SYNRECEIVED ||
             tcp->state == TCPS_LISTEN || tcp->state == TCPS_CLOSED) {
