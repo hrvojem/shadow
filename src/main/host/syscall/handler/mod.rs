@@ -46,6 +46,7 @@ mod sched;
 mod select;
 mod shadow;
 mod signal;
+mod sigtimedwait;
 mod socket;
 mod stat;
 mod sysinfo;
@@ -463,6 +464,7 @@ impl SyscallHandler {
             SyscallNum::NR_rseq => handle!(rseq),
             SyscallNum::NR_rt_sigaction => handle!(rt_sigaction),
             SyscallNum::NR_rt_sigprocmask => handle!(rt_sigprocmask),
+            SyscallNum::NR_rt_sigtimedwait => handle!(rt_sigtimedwait),
             SyscallNum::NR_sched_getparam => handle!(sched_getparam),
             SyscallNum::NR_sched_getscheduler => handle!(sched_getscheduler),
             SyscallNum::NR_sched_getaffinity => handle!(sched_getaffinity),
